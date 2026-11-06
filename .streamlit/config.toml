@@ -1,0 +1,9 @@
+# Local demo app: no Deploy button or usage telemetry.
+[client]
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false
+
+[server]
+headless = true

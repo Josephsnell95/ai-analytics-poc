@@ -1,0 +1,8 @@
+{
+  "measures": ["revenue", "units_sold"],
+  "dimensions": ["product_model"],
+  "filters": [{"field": "order_date", "op": "between", "value": ["2013-01-01", "2013-12-31"]}],
+  "sort": [{"field": "revenue", "dir": "desc"}],
+  "limit": 5,
+  "assumptions": ["Interpreted 'last year' as calendar 2013, the latest full year in the data"]
+}

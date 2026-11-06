@@ -1,0 +1,48 @@
+# Milestone 3 smoke test: ten varied questions with known answers.
+# Run with:  python -m agent --smoke            (Llama, local)
+#            python -m agent --smoke -p anthropic
+#
+# Expected answers were computed with the compiler directly (python -m semantic),
+# so they are the ground truth for what a correct semantic query returns. This
+# is a quick manual check, not the evaluation set: milestone 5 builds the scored
+# question set, with a held-out third that is never used for tuning.
+
+- question: What was total revenue in 2013?
+  tests: simple lookup with a date filter
+  expected: $16,351,550
+
+- question: Show me sales by product category for 2013
+  tests: synonym ("sales"), breakdown, chart
+  expected: Bikes $15,359,502; Accessories $668,242; Clothing $323,806 (no Components sold online)
+
+- question: Which bike subcategory has the lowest gross margin percentage?
+  tests: derived measure, filter on a parent dimension, ranking
+  expected: Touring Bikes, 37.8%
+
+- question: Plot the monthly revenue trend for 2013
+  tests: time grain, line chart
+  expected: 12 months rising from $857,690 (Jan) to $1,874,360 (Dec); dip in February
+
+- question: How many orders did customers in Germany place?
+  tests: customer geography snowflake join, count_distinct
+  expected: 2,484 orders (all time)
+
+- question: What is the average order value in each sales territory group?
+  tests: derived ratio measure
+  expected: Pacific $1,349; Europe $1,116; North America $878
+
+- question: Which 3 product models had the highest turnover?
+  tests: synonym ("turnover"), top N
+  expected: Mountain-200 $7,929,475; Road-150 $5,549,897; Road-250 $4,451,260
+
+- question: Compare revenue by quarter for 2012 and 2013
+  tests: time comparison, quarter grain
+  expected: 2012 quarters $1.38M, $1.31M, $1.45M, $1.70M; 2013 quarters $2.68M, $3.97M, $4.37M, $5.33M
+
+- question: How many customers in Australia bought something in 2013?
+  tests: two filters, distinct customers
+  expected: 3,532 customers
+
+- question: What were our reseller sales last year?
+  tests: out of scope, should decline rather than answer with internet revenue
+  expected: Declines; reseller sales are not in the model

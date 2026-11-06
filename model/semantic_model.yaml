@@ -1,0 +1,319 @@
+# Semantic model for the AdventureWorksDW Internet Sales star.
+#
+# This file is the single source of business definitions. The agent only ever sees
+# what is described here, and the compiler only ever generates SQL from it.
+#
+# Conventions
+#   - Table, dimension and measure names are lower_snake_case and globally unique.
+#   - Every join is many_to_one, pointing away from the single fact table, so the
+#     compiler only walks chains of many-to-one joins and can never fan out.
+#   - `sql` is either a bare column of the field's table, or an expression that
+#     refers to that table as {TABLE}. Derived measures refer to other measures by name.
+#   - Base measures that sum/avg/min/max/count must live on the fact table. Only
+#     count_distinct is allowed on a dimension table, because it is the only
+#     aggregation that gives the right answer at fact-row grain.
+
+fact: internet_sales
+
+tables:
+  internet_sales:
+    source: FactInternetSales
+    description: One row per sales order line placed through the website.
+    joins:
+      - {to: product,         from_key: ProductKey,        to_key: ProductKey,        relationship: many_to_one}
+      - {to: order_date,      from_key: OrderDateKey,      to_key: DateKey,           relationship: many_to_one}
+      - {to: customer,        from_key: CustomerKey,       to_key: CustomerKey,       relationship: many_to_one}
+      - {to: sales_territory, from_key: SalesTerritoryKey, to_key: SalesTerritoryKey, relationship: many_to_one}
+      - {to: promotion,       from_key: PromotionKey,      to_key: PromotionKey,      relationship: many_to_one}
+
+  product:
+    source: DimProduct
+    joins:
+      - {to: subcategory, from_key: ProductSubcategoryKey, to_key: ProductSubcategoryKey, relationship: many_to_one}
+
+  subcategory:
+    source: DimProductSubcategory
+    joins:
+      - {to: category, from_key: ProductCategoryKey, to_key: ProductCategoryKey, relationship: many_to_one}
+
+  category:
+    source: DimProductCategory
+
+  order_date:
+    source: DimDate
+
+  customer:
+    source: DimCustomer
+    joins:
+      - {to: customer_geography, from_key: GeographyKey, to_key: GeographyKey, relationship: many_to_one}
+
+  customer_geography:
+    source: DimGeography
+
+  sales_territory:
+    source: DimSalesTerritory
+
+  promotion:
+    source: DimPromotion
+
+dimensions:
+  # --- Product ---------------------------------------------------------------
+  product_category:
+    table: category
+    sql: EnglishProductCategoryName
+    description: Top-level product category. Values are Bikes, Accessories, Clothing and Components.
+    synonyms: [category, product type]
+
+  product_subcategory:
+    table: subcategory
+    sql: EnglishProductSubcategoryName
+    description: Product subcategory within a category, e.g. Road Bikes, Helmets, Tires and Tubes, Jerseys.
+    synonyms: [subcategory, product group]
+
+  product_name:
+    table: product
+    sql: EnglishProductName
+    description: Individual product name including size and colour variant, e.g. "Road-150 Red, 62".
+    synonyms: [product, item, sku name]
+
+  product_model:
+    table: product
+    sql: ModelName
+    description: Product model, grouping size and colour variants of the same product, e.g. "Road-150", "Sport-100".
+    synonyms: [model]
+
+  product_line:
+    table: product
+    sql: >-
+      CASE TRIM({TABLE}.ProductLine)
+        WHEN 'R' THEN 'Road' WHEN 'M' THEN 'Mountain'
+        WHEN 'T' THEN 'Touring' WHEN 'S' THEN 'Standard' END
+    description: Product line. Values are Road, Mountain, Touring and Standard (accessories and clothing).
+    synonyms: [line]
+
+  product_color:
+    table: product
+    sql: Color
+    description: Product colour. "NA" means the product has no colour.
+    synonyms: [colour, color]
+
+  # --- Date ------------------------------------------------------------------
+  order_date:
+    table: order_date
+    sql: FullDateAlternateKey
+    type: time
+    grains: [day, week, month, quarter, year]
+    description: >-
+      Date the order was placed. Use a grain to group by week, month, quarter or year.
+      Calendar dates only; fiscal periods are not modelled.
+    synonyms: [date, order day, when]
+
+  # --- Customer --------------------------------------------------------------
+  customer_name:
+    table: customer
+    sql: "{TABLE}.FirstName || ' ' || {TABLE}.LastName"
+    description: Customer full name. Customers are individual consumers, not businesses.
+    synonyms: [customer, buyer, shopper]
+
+  customer_gender:
+    table: customer
+    sql: "CASE {TABLE}.Gender WHEN 'M' THEN 'Male' WHEN 'F' THEN 'Female' END"
+    description: Customer gender, Male or Female.
+    synonyms: [gender, sex]
+
+  customer_marital_status:
+    table: customer
+    sql: "CASE {TABLE}.MaritalStatus WHEN 'M' THEN 'Married' WHEN 'S' THEN 'Single' END"
+    description: Customer marital status, Married or Single.
+    synonyms: [marital status]
+
+  customer_education:
+    table: customer
+    sql: EnglishEducation
+    description: Customer education level, e.g. Bachelors, Graduate Degree, High School.
+    synonyms: [education]
+
+  customer_occupation:
+    table: customer
+    sql: EnglishOccupation
+    description: Customer occupation group, e.g. Professional, Management, Skilled Manual.
+    synonyms: [occupation, job]
+
+  customer_country:
+    table: customer_geography
+    sql: EnglishCountryRegionName
+    description: Country of the customer's address. Values are United States, Canada, United Kingdom, France, Germany and Australia.
+    synonyms: [country, customer location]
+
+  customer_state:
+    table: customer_geography
+    sql: StateProvinceName
+    description: State or province of the customer's address.
+    synonyms: [state, province, region of customer]
+
+  customer_city:
+    table: customer_geography
+    sql: City
+    description: City of the customer's address.
+    synonyms: [city, town]
+
+  # --- Sales territory -------------------------------------------------------
+  sales_territory_group:
+    table: sales_territory
+    sql: SalesTerritoryGroup
+    description: Highest level sales territory. Values are North America, Europe and Pacific.
+    synonyms: [territory group, continent, market]
+
+  sales_territory_country:
+    table: sales_territory
+    sql: SalesTerritoryCountry
+    description: Country the sale is attributed to for sales reporting.
+    synonyms: [territory country, sales country]
+
+  sales_territory_region:
+    table: sales_territory
+    sql: SalesTerritoryRegion
+    description: Sales region. The United States is split into Northwest, Northeast, Central, Southwest and Southeast; other countries are one region each.
+    synonyms: [territory, sales region, region]
+
+  # --- Promotion -------------------------------------------------------------
+  promotion_name:
+    table: promotion
+    sql: EnglishPromotionName
+    description: Promotion applied to the order line. "No Discount" means no promotion.
+    synonyms: [promotion, promo, discount name]
+
+  promotion_type:
+    table: promotion
+    sql: EnglishPromotionType
+    description: Type of promotion, e.g. No Discount, Volume Discount, New Product.
+    synonyms: [promo type, discount type]
+
+measures:
+  revenue:
+    table: internet_sales
+    sql: SalesAmount
+    agg: sum
+    format: currency
+    description: Invoiced sales value in USD, excluding tax and freight.
+    synonyms: [sales, turnover, spend, sales amount, income]
+
+  total_cost:
+    table: internet_sales
+    sql: TotalProductCost
+    agg: sum
+    format: currency
+    description: Standard cost of the products sold, in USD.
+    synonyms: [cost, cost of goods sold, cogs, product cost]
+
+  gross_margin:
+    type: derived
+    sql: revenue - total_cost
+    format: currency
+    description: Revenue minus product cost, in USD.
+    synonyms: [margin, profit, gross profit]
+
+  gross_margin_pct:
+    type: derived
+    sql: (revenue - total_cost) / NULLIF(revenue, 0)
+    format: percent
+    description: Gross margin as a share of revenue. 0.4 means 40%.
+    synonyms: [margin %, margin percent, margin rate, profitability]
+
+  tax:
+    table: internet_sales
+    sql: TaxAmt
+    agg: sum
+    format: currency
+    description: Tax charged, in USD. Not included in revenue.
+    synonyms: [tax amount, vat]
+
+  freight:
+    table: internet_sales
+    sql: Freight
+    agg: sum
+    format: currency
+    description: Freight charged, in USD. Not included in revenue.
+    synonyms: [shipping, delivery charge]
+
+  units_sold:
+    table: internet_sales
+    sql: OrderQuantity
+    agg: sum
+    format: number
+    description: Number of product units sold.
+    synonyms: [quantity, units, volume, items sold]
+
+  order_count:
+    table: internet_sales
+    sql: SalesOrderNumber
+    agg: count_distinct
+    format: number
+    description: Number of distinct sales orders. An order can contain several lines.
+    synonyms: [orders, number of orders, transactions]
+
+  order_line_count:
+    table: internet_sales
+    sql: "*"
+    agg: count
+    format: number
+    description: Number of order lines. Use order_count for the number of orders.
+    synonyms: [lines, order lines]
+
+  customer_count:
+    table: internet_sales
+    sql: CustomerKey
+    agg: count_distinct
+    format: number
+    description: Number of distinct customers who placed at least one order in scope.
+    synonyms: [customers, buyers, number of customers, active customers]
+
+  average_order_value:
+    type: derived
+    sql: revenue / NULLIF(order_count, 0)
+    format: currency
+    description: Revenue per order, in USD.
+    synonyms: [aov, average order size, basket value]
+
+  revenue_per_customer:
+    type: derived
+    sql: revenue / NULLIF(customer_count, 0)
+    format: currency
+    description: Revenue per distinct customer, in USD.
+    synonyms: [spend per customer, average customer value]
+
+# Things people will ask about that this model can't answer. A question that
+# mentions any term is declined with the reason, in code, before the LLM sees it.
+# Llama declined "reseller sales" in one run and answered it with internet revenue
+# in the next, so this can't be left to the prompt. Terms match whole words,
+# case-insensitively; list plurals explicitly. The loader rejects a term that is
+# also a field or synonym, so this can never block an answerable question.
+not_available:
+  - topic: Reseller sales
+    terms: [reseller, resellers, reseller sales, dealer, dealers, wholesale]
+    reason: This model covers internet (direct-to-consumer) sales only. Reseller sales are a separate fact table that isn't modelled yet.
+  - topic: Employees and sales reps
+    terms: [employee, employees, staff, salesperson, salespeople, sales rep, sales reps]
+    reason: There is no employee data in this model. Internet sales aren't attributed to a salesperson.
+  - topic: Targets and quotas
+    terms: [quota, quotas, target, targets, budget, budgets]
+    reason: Sales targets, quotas and budgets aren't in this model, only actual sales.
+  - topic: Inventory
+    terms: [inventory, stock level, stock levels, stock on hand, in stock]
+    reason: Inventory and stock levels aren't in this model, only sales.
+  - topic: Fiscal periods
+    terms: [fiscal, financial year, fy]
+    reason: Fiscal periods aren't modelled because the sample's fiscal calendar is inconsistent. Calendar years and quarters are available instead.
+  - topic: Forecasts
+    terms: [forecast, forecasts, forecasting, predict, prediction]
+    reason: This model reports historical sales only; it doesn't produce forecasts.
+
+ai_context: |
+  All money is in US dollars, whatever currency the customer paid in.
+  Orders run from 2010-12-29 to 2014-01-28. The latest full calendar year is 2013;
+  2010 has only a few days and 2014 only January.
+  Years and quarters are calendar periods. Fiscal periods are not modelled, so if
+  asked for a fiscal year, say so and use the calendar year as a stated assumption.
+  "Top customers" defaults to revenue over all time unless a period is given.
+  This model covers internet (direct-to-consumer) sales only. Reseller sales,
+  employees, sales quotas and inventory are not available.

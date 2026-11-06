@@ -1,0 +1,9 @@
+data/raw/
+data/*.duckdb
+data/*.duckdb.wal
+*.sqlite
+__pycache__/
+.pytest_cache/
+.venv/
+.env
+charts/

@@ -1,0 +1,21 @@
+# USD per million tokens. Rates change, so check before quoting a cost figure:
+# https://docs.claude.com/en/docs/about-claude/pricing
+#
+# claude-haiku-5-5 rates taken from secondary sources on 2026-11-05 (apidog.com,
+# eesel.ai), which agree with each other. Not yet checked against Anthropic's page.
+#
+# long_context_* rates apply to a whole request when its input exceeds the
+# threshold. This app's prompts are a few thousand tokens, so they never should.
+
+claude-haiku-5-5:
+  input: 0.10
+  output: 0.50
+  long_context_threshold: 100000
+  long_context_input: 0.50
+  long_context_output: 2.50
+
+# Local models cost nothing per token. Listed explicitly so a missing entry for a
+# paid model is an error rather than a silent $0.
+llama3.1:8b:
+  input: 0
+  output: 0

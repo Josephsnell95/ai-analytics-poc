@@ -1,0 +1,30 @@
+# Runtime settings. Anything tunable lives here or in agent/prices.yaml, not in code.
+# Secrets (the Anthropic API key) live in .env, never here.
+
+compiler:
+  default_limit: 100   # rows returned when a query gives no limit
+  max_limit: 1000      # queries asking for more are rejected with a message to aggregate further
+
+agent:
+  default_provider: ollama   # ollama (free, local) or anthropic (paid API)
+  max_tool_calls: 6          # a confused model fails fast instead of burning tokens
+  rows_to_llm: 50            # result rows shown to the model; the app still gets all of them
+  history_turns: 2           # earlier questions passed with a follow-up (question, query, answer; no rows)
+
+providers:
+  ollama:
+    model: llama3.1:8b
+    temperature: 0           # as deterministic as possible, so evals are repeatable
+    num_ctx: 8192            # Ollama's default context is too small for the model description
+    keep_alive: 30m          # keep the model in memory between questions
+    timeout_seconds: 300     # CPU inference is slow; one step can take a minute
+  anthropic:
+    model: claude-haiku-5-5
+    max_tokens: 1024
+    # No temperature: current Claude models reject the parameter.
+    timeout_seconds: 60
+
+paths:
+  model: model/semantic_model.yaml
+  database: data/adventureworks.duckdb
+  app_state: data/app_state.sqlite

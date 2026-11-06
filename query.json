@@ -1,0 +1,1 @@
+{"measures": ["revenue", "gross_margin_pct"], "dimensions": [{"field": "order_date", "grain": "year"}]}

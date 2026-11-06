@@ -190,3 +190,60 @@ def test_default_chart_groups_measures_in_the_same_unit(engine):
 def test_agent_requested_multi_measure_bar_is_grouped(engine):
     r = engine.run({"measures": ["revenue", "total_cost"], "dimensions": ["product_category"]})
     assert build_chart(r, "bar", "product_category", ["revenue", "total_cost"])["layout"]["barmode"] == "group"
+
+
+# ------------------------------------------- follow-up carry-over (2026-11-06 app log)
+TOP5_QUERY = {"sort": [{"field": "gross_margin", "dir": "desc"}], "limit": 5,
+              "measures": ["revenue", "gross_margin"], "dimensions": ["product_name"]}
+FOLLOW_UP_QUERY = {"dimensions": ["product_name"], "measures": ["revenue", "gross_margin"],
+                   "filters": [{"field": "order_date", "op": "=", "value": "2013"}]}
+
+
+def test_follow_up_that_drops_sort_and_limit_is_warned(engine):
+    # "now show those for just 2013" after the top-5 question: Llama's actual query.
+    tools = Tools(engine, 50)
+    tools.reset(previous_query=TOP5_QUERY)
+    note = json.loads(tools.run_query(FOLLOW_UP_QUERY))["note_follow_up"]
+    assert "limit 5" in note and "sort gross_margin desc" in note and "same items" in note
+
+
+def test_follow_up_warning_given_once_per_question(engine):
+    tools = Tools(engine, 50)
+    tools.reset(previous_query=TOP5_QUERY)
+    tools.run_query(FOLLOW_UP_QUERY)
+    assert "note_follow_up" not in json.loads(tools.run_query(FOLLOW_UP_QUERY))
+
+
+def test_follow_up_that_keeps_everything_is_not_warned(engine):
+    tools = Tools(engine, 50)
+    tools.reset(previous_query=TOP5_QUERY)
+    corrected = dict(TOP5_QUERY, filters=FOLLOW_UP_QUERY["filters"])
+    assert "note_follow_up" not in json.loads(tools.run_query(corrected))
+
+
+def test_follow_up_dropping_a_filter_is_warned(engine):
+    tools = Tools(engine, 50)
+    tools.reset(previous_query={"measures": ["revenue"], "filters": [{"field": "product_category", "op": "=", "value": "Bikes"}]})
+    note = json.loads(tools.run_query({"measures": ["revenue"], "dimensions": ["order_date__year"]}))["note_follow_up"]
+    assert 'filter product_category = "Bikes"' in note
+
+
+def test_no_previous_query_no_warning(engine):
+    assert "note_follow_up" not in json.loads(Tools(engine, 50).run_query(FOLLOW_UP_QUERY))
+
+
+@pytest.mark.parametrize("bare", ["2013", 2013, "2013-Q2", "2013-03", "2013-03-15"])
+def test_bare_period_filter_becomes_time_filter(bare):
+    out = normalise_query_args({"measures": ["revenue"], "filters": [bare]}, time_dimension="order_date")
+    assert out["filters"] == [{"field": "order_date", "op": "=", "value": str(bare)}]
+
+
+def test_bare_text_filter_left_for_compiler():
+    assert normalise_query_args({"measures": ["revenue"], "filters": ["Bikes"]}, "order_date")["filters"] == ["Bikes"]
+
+
+def test_logged_bare_2013_filter_now_runs(engine):
+    # Llama's first attempt at the follow-up, rejected in the logged run.
+    out = json.loads(Tools(engine, 50).run_query(
+        {"measures": ["revenue", "gross_margin"], "dimensions": ["product_name"], "filters": ["2013"]}))
+    assert out["row_count"] > 0

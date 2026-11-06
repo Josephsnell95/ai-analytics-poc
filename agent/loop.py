@@ -81,7 +81,8 @@ class Agent:
         "now by month" can build on the previous query.
         """
         notify = on_event or (lambda _msg: None)
-        self.tools.reset()
+        previous = history[-1].semantic_query if history and self.history_turns > 0 else None
+        self.tools.reset(previous_query=previous)
         messages = self._history_messages(history) + [{"role": "user", "content": question}]
         usage = Usage()
         started = time.perf_counter()

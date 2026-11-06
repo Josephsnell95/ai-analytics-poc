@@ -264,3 +264,18 @@ def test_prompt_has_follow_up_rule(engine, settings):
     agent, provider = make_agent(engine, settings, [say("x")])
     agent.ask("q")
     assert "never reuse numbers from an earlier answer" in provider.calls[0]["system"]
+
+
+def test_follow_up_warning_reaches_model_and_retry_is_reported(engine, settings):
+    agent, provider = make_agent(engine, settings, [
+        tool("run_query", **TOP5), say("Top five shown."),
+        tool("run_query", measures=["revenue", "gross_margin"], dimensions=["product_name"],
+             filters=[{"field": "order_date", "op": "=", "value": "2013"}]),
+        tool("run_query", **TOP5, filters=[{"field": "order_date", "op": "=", "value": "2013"}]),
+        say("For 2013, Mountain-200 Black, 42 led with $970,780.77."),
+    ])
+    first = agent.ask("top 5 items by sales and their profit")
+    r = agent.ask("now show those for just 2013", history=[first])
+    warning = provider.calls[3]["messages"][-1]["content"]
+    assert "note_follow_up" in warning and "limit 5" in warning
+    assert len(r.rows) == 5 and r.unverified == []

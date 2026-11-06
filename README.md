@@ -13,7 +13,7 @@ Runs entirely on a laptop against Microsoft's public AdventureWorksDW sample (In
 | 1. Data load into DuckDB | Done |
 | 2. Semantic model + compiler, no LLM | Done |
 | 3. Agent loop as a CLI | Done: 10/10 smoke questions on both models (see below) |
-| 4. Streamlit chat | Built; needs a run-through by someone other than the author |
+| 4. Streamlit chat | Done |
 | 5. Evaluation harness | |
 | 6. Saved gallery, sharing between demo users, correction log | |
 
@@ -28,7 +28,7 @@ py -m venv .venv
 .venv\Scripts\activate                 # if scripts are blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install -r requirements.txt
 python data/load.py --verify            # downloads the sample (~17 MB) and builds data/adventureworks.duckdb
-pytest                                  # 232 tests, a few seconds
+pytest                                  # 245 tests, a few seconds
 streamlit run app/main.py               # opens the chat in your browser
 ```
 
@@ -45,7 +45,7 @@ Run it from the project folder. It opens at http://localhost:8501; stop it with 
 - **Pick the model in the sidebar.** Llama runs locally and is free but takes a minute or two per answer on a laptop CPU; Claude Haiku takes a few seconds and costs about a tenth of a cent. The sidebar says if a model isn't available (Ollama not running, or no API key in `.env`), and the chat box is disabled until it is.
 - **Each answer shows** any assumption the model made, the written answer, a chart for breakdowns, the data behind it, and a footer with model calls, tokens, cost and time. **How this was answered** shows the semantic query, the generated SQL, and any query the semantic layer rejected along the way, with the reason.
 - **While it works**, the status line shows what the agent is doing: running a query, fixing a rejected one, drawing a chart.
-- **Follow-ups work.** The agent sees the last two questions in the chat, each with its answer and the semantic query behind it (not the data rows), so "now by month" or "plot those side by side" builds on the previous query. It always re-queries rather than reusing old numbers. **New chat** starts fresh. `history_turns` in `config.yaml` sets how many turns are passed.
+- **Follow-ups work.** The agent sees the last two questions in the chat, each with its answer and the semantic query behind it (not the data rows), so "now by month" or "plot those side by side" builds on the previous query. It always re-queries rather than reusing old numbers. If a follow-up's query quietly drops the previous query's sort, limit or a filter, the model is told and asked to add them back if the question still means the same items. (In testing, "now show those for just 2013" lost the top-5 limit and Llama listed five arbitrary products as the top five.) **New chat** starts fresh. `history_turns` in `config.yaml` sets how many turns are passed.
 - **Figures are checked against the data.** Every number in the written answer is matched against the query result at the precision it was written (rounded or truncated). Anything that doesn't match is flagged above the chart: in testing, Llama reported a $11,505,796.50 margin as $11,506,197. Flagged figures are logged too (`unverified` in `question_log`).
 - Every question is logged to `data/app_state.sqlite`, the same log the CLI uses.
 

@@ -7,6 +7,7 @@ the model can act on, never as exceptions, so the loop can let it retry.
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -104,6 +105,7 @@ TOOLS = [
 ]
 TOOL_NAMES = {t["name"] for t in TOOLS}
 LIST_KEYS = ("measures", "dimensions", "filters", "sort", "assumptions")
+PERIOD_LIKE_RE = re.compile(r"^\d{4}(?:-?[Qq][1-4]|-\d{2}(?:-\d{2})?)?$")   # 2013, 2013-Q2, 2013-03, 2013-03-15
 
 
 @dataclass
@@ -121,6 +123,8 @@ class ToolState:
     last_result: QueryResult | None = None
     last_query: dict | None = None
     chart: dict | None = None
+    previous_query: dict | None = None   # behind the previous answer in this chat, for follow-ups
+    carry_over_warned: bool = False
 
 
 class Tools:
@@ -129,8 +133,8 @@ class Tools:
         self.rows_to_llm = rows_to_llm
         self.state = ToolState()
 
-    def reset(self) -> None:
-        self.state = ToolState()
+    def reset(self, previous_query: dict | None = None) -> None:
+        self.state = ToolState(previous_query=previous_query)
 
     def call(self, name: str, args: dict[str, Any]) -> str:
         if name == "get_model":
@@ -143,7 +147,7 @@ class Tools:
 
     # --------------------------------------------------------------- run_query
     def run_query(self, args: dict) -> str:
-        query = normalise_query_args(args)
+        query = normalise_query_args(args, self._time_dimension())
         attempt = QueryAttempt(query)
         self.state.attempts.append(attempt)
         try:
@@ -174,7 +178,39 @@ class Tools:
                 "filters fall in that range. For a text filter, run a query grouped by that dimension "
                 "to see its exact values."
             )
+        dropped = self._dropped_from_previous(query)
+        if dropped:
+            self.state.carry_over_warned = True
+            payload["note_follow_up"] = (
+                f"Compared with the query behind the previous answer, this query drops: {'; '.join(dropped)}. "
+                "If the question refers to the same items ('those', 'them', 'that'), call run_query again "
+                "with these added back. If the question deliberately widens the scope, ignore this note."
+            )
         return json.dumps(payload, default=str)
+
+    def _dropped_from_previous(self, query: dict) -> list[str]:
+        """What a follow-up's query silently left out of the previous one. In the app,
+        "now show those for just 2013" kept the year but lost the top-5 sort and limit,
+        so Llama listed five arbitrary products as the top five. Warned once per question,
+        so a deliberate change costs one extra model call at most."""
+        prev = self.state.previous_query
+        if not prev or self.state.carry_over_warned:
+            return []
+        dropped = []
+        if prev.get("limit") and not query.get("limit"):
+            dropped.append(f"limit {prev['limit']}")
+        if prev.get("sort") and not query.get("sort"):
+            dropped.append("sort " + ", ".join(f"{s['field']} {s.get('dir', 'asc')}" for s in prev["sort"]))
+        kept = {f.get("field") for f in query.get("filters", []) if isinstance(f, dict)}
+        for f in prev.get("filters", []):
+            if isinstance(f, dict) and f.get("field") not in kept:
+                dropped.append(f"filter {f.get('field')} {f.get('op')} {json.dumps(f.get('value'))}")
+        return dropped
+
+    def _time_dimension(self) -> str | None:
+        """The model's time dimension, if it has exactly one."""
+        times = [d.name for d in self.engine.model.dimensions.values() if d.type == "time"]
+        return times[0] if len(times) == 1 else None
 
     # -------------------------------------------------------------- make_chart
     def make_chart(self, args: dict) -> str:
@@ -222,7 +258,7 @@ def describe_model(model, search: str | None = None) -> str:
 
 
 # --------------------------------------------------------------- helpers
-def normalise_query_args(args: dict) -> dict:
+def normalise_query_args(args: dict, time_dimension: str | None = None) -> dict:
     """Undo common small-model tool-calling slips before strict validation.
 
     Llama often wraps the query in a "query" key, or sends a list as a JSON string
@@ -248,8 +284,22 @@ def normalise_query_args(args: dict) -> dict:
     out["limit"] = limit
     if isinstance(out.get("dimensions"), list):
         out["dimensions"] = [_normalise_dimension(d) for d in out["dimensions"]]
+    if isinstance(out.get("filters"), list) and time_dimension:
+        out["filters"] = [_normalise_filter(f, time_dimension) for f in out["filters"]]
     # Optional keys sent as null or empty mean "not given".
     return {k: v for k, v in out.items() if v not in (None, "", [])} or out
+
+
+def _normalise_filter(f: Any, time_dimension: str) -> Any:
+    """A bare date or period as a filter ("filters": ["2013"]) can only mean the time
+    dimension when the model has just one, so it becomes {"field": ..., "op": "=", ...}.
+    Any other bare value is left for the compiler to reject: which field it belongs to
+    would be a guess."""
+    if isinstance(f, (str, int)) and not isinstance(f, bool):
+        s = str(f).strip()
+        if PERIOD_LIKE_RE.match(s):
+            return {"field": time_dimension, "op": "=", "value": s}
+    return f
 
 
 def _normalise_dimension(d: Any) -> Any:

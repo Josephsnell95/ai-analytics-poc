@@ -1,0 +1,1312 @@
+{
+  "meta": {
+    "provider": "anthropic",
+    "model": "claude-haiku-5-5",
+    "set": "tuning",
+    "questions": 32,
+    "awaiting_reference": [],
+    "started": "2026-11-06T16:49:18+00:00",
+    "finished": "2026-11-06T16:50:59+00:00",
+    "git_commit": "c2872a4",
+    "prompt_sha": "6f711514ed",
+    "semantic_model_sha": "b112db4ff9",
+    "config": {
+      "max_tool_calls": 6,
+      "rows_to_llm": 50,
+      "history_turns": 2
+    }
+  },
+  "results": [
+    {
+      "id": "lookup_orders_2012",
+      "set": "tuning",
+      "category": "lookup",
+      "question": "How many orders were placed in 2012?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "There were 3,269 orders placed in 2012, using calendar year 2012 as the period.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "order_count"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2012"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8585,
+      "output_tokens": 130,
+      "cost_usd": 0.0009235,
+      "latency_s": 2.43,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "lookup_aov_2013",
+      "set": "tuning",
+      "category": "lookup",
+      "question": "What was the average order value in 2013?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "The average order value in 2013 was $768.08. This uses calendar year 2013 (January 1 to December 31), since fiscal periods aren't modelled.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "average_order_value"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8590,
+      "output_tokens": 153,
+      "cost_usd": 0.0009355,
+      "latency_s": 2.19,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "lookup_freight_total",
+      "set": "tuning",
+      "category": "lookup",
+      "question": "How much have we charged in freight in total?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Total freight charged across all internet sales is $733,969.61, covering the full order history from December 2010 to January 2014. Freight is kept separate from revenue, so it isn't included in the revenue figure.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "freight"
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8538,
+      "output_tokens": 119,
+      "cost_usd": 0.0009133,
+      "latency_s": 3.01,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "lookup_clothing_margin_pct",
+      "set": "tuning",
+      "category": "lookup",
+      "question": "What is the gross margin percentage on clothing?",
+      "follow_up_of": null,
+      "outcome": "correct_flagged",
+      "passed": true,
+      "reason": "figures not in the data: 40.2%",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "The gross margin percentage on clothing is 40.2%, calculated over all time since no period was specified.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "gross_margin_pct"
+        ],
+        "filters": [
+          {
+            "field": "product_category",
+            "op": "=",
+            "value": "Clothing"
+          }
+        ]
+      },
+      "unverified": [
+        "40.2%"
+      ],
+      "row_count": 1,
+      "input_tokens": 8610,
+      "output_tokens": 140,
+      "cost_usd": 0.000931,
+      "latency_s": 2.06,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "lookup_helmets_q3",
+      "set": "tuning",
+      "category": "lookup",
+      "question": "How many helmets did we sell in Q3 2013?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "We sold 1,622 helmets in Q3 2013. I took \"helmets\" to mean the Helmets subcategory and Q3 as the calendar quarter (July to September 2013).",
+      "assumptions": [
+        "Helmets means the product subcategory 'Helmets'",
+        "Q3 2013 is the calendar quarter July-September 2013"
+      ],
+      "semantic_query": {
+        "measures": [
+          "units_sold"
+        ],
+        "filters": [
+          {
+            "field": "product_subcategory",
+            "op": "=",
+            "value": "Helmets"
+          },
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013-Q3"
+          }
+        ],
+        "assumptions": [
+          "Helmets means the product subcategory 'Helmets'",
+          "Q3 2013 is the calendar quarter July-September 2013"
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8698,
+      "output_tokens": 261,
+      "cost_usd": 0.0010003,
+      "latency_s": 2.4,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "breakdown_territory_group",
+      "set": "tuning",
+      "category": "breakdown",
+      "question": "Show revenue for each sales territory group",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "North America leads with $11,367,634.37 in revenue, followed by Pacific at $9,061,000.58 and Europe at $8,930,042.26. This covers all orders from the start of the data through January 2014, since no period was specified.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "sales_territory_group"
+        ]
+      },
+      "unverified": [],
+      "row_count": 3,
+      "input_tokens": 13239,
+      "output_tokens": 298,
+      "cost_usd": 0.0014729,
+      "latency_s": 3.49,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "breakdown_gender_orders",
+      "set": "tuning",
+      "category": "breakdown",
+      "question": "Break down the number of orders by customer gender",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Male customers placed 13,917 orders and female customers placed 13,742, so the split is nearly even, with males slightly ahead. This covers all orders from the start of the data (December 2010) to January 2014.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "order_count"
+        ],
+        "dimensions": [
+          "customer_gender"
+        ]
+      },
+      "unverified": [],
+      "row_count": 2,
+      "input_tokens": 13150,
+      "output_tokens": 283,
+      "cost_usd": 0.0014565,
+      "latency_s": 3.3,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "breakdown_education_2013",
+      "set": "tuning",
+      "category": "breakdown",
+      "question": "What was 2013 revenue by customer education level?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Bachelors customers generated the most 2013 revenue at $5,625,848.91, followed by Partial College at $4,276,956.06 and Graduate Degree at $3,092,507.16. High School ($2,481,205.99) and Partial High School ($875,032.22) make up the rest. Revenue is calendar 2013, excluding tax and freight.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "customer_education"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013"
+          }
+        ],
+        "sort": [
+          {
+            "field": "revenue",
+            "dir": "desc"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 5,
+      "input_tokens": 13504,
+      "output_tokens": 421,
+      "cost_usd": 0.0015609,
+      "latency_s": 3.56,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "breakdown_product_line_margin",
+      "set": "tuning",
+      "category": "breakdown",
+      "question": "What's the margin percentage for each product line?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Standard has the highest gross margin at 50.0%, followed by Mountain at 45.9%. Road (38.3%) and Touring (38.1%) are lower. This covers all order dates from December 2010 to January 2014.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "gross_margin_pct"
+        ],
+        "dimensions": [
+          "product_line"
+        ]
+      },
+      "unverified": [],
+      "row_count": 4,
+      "input_tokens": 13302,
+      "output_tokens": 297,
+      "cost_usd": 0.0014787000000000001,
+      "latency_s": 4.08,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "breakdown_accessory_colours",
+      "set": "tuning",
+      "category": "breakdown",
+      "question": "Units sold by colour for accessories",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Accessories sold 28,919 units with no colour (\"NA\"), far more than any coloured variant. Among coloured items, Red led with 2,230 units, followed by Blue (2,125), Black (2,085) and Silver (733). All figures cover the full period, since no date range was specified.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "units_sold"
+        ],
+        "dimensions": [
+          "product_color"
+        ],
+        "filters": [
+          {
+            "field": "product_category",
+            "op": "=",
+            "value": "Accessories"
+          }
+        ],
+        "sort": [
+          {
+            "field": "units_sold",
+            "dir": "desc"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 5,
+      "input_tokens": 13445,
+      "output_tokens": 399,
+      "cost_usd": 0.001544,
+      "latency_s": 4.33,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "ranking_cities_customers",
+      "set": "tuning",
+      "category": "ranking",
+      "question": "Which 5 cities have the most customers?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "London has the most customers (420), followed by Paris (386), Burien (212), Concord (212) and Beaverton (210). Burien and Concord are tied at 212. This is based on all customers across all time, since no period was specified.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "customer_count"
+        ],
+        "dimensions": [
+          "customer_city"
+        ],
+        "sort": [
+          {
+            "field": "customer_count",
+            "dir": "desc"
+          }
+        ],
+        "limit": 5
+      },
+      "unverified": [],
+      "row_count": 5,
+      "input_tokens": 13466,
+      "output_tokens": 356,
+      "cost_usd": 0.0015246,
+      "latency_s": 3.47,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "ranking_subcategories_units_2012",
+      "set": "tuning",
+      "category": "ranking",
+      "question": "Top 3 subcategories by units sold in 2012",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "In 2012, Road Bikes led with 2,158 units sold, followed by Mountain Bikes at 1,098 and Bottles and Cages at 38. I took 2012 as the calendar year (January to December).",
+      "assumptions": [
+        "2012 means calendar year 2012, Jan 1 to Dec 31"
+      ],
+      "semantic_query": {
+        "measures": [
+          "units_sold"
+        ],
+        "dimensions": [
+          "product_subcategory"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2012"
+          }
+        ],
+        "sort": [
+          {
+            "field": "units_sold",
+            "dir": "desc"
+          }
+        ],
+        "limit": 3,
+        "assumptions": [
+          "2012 means calendar year 2012, Jan 1 to Dec 31"
+        ]
+      },
+      "unverified": [],
+      "row_count": 3,
+      "input_tokens": 13639,
+      "output_tokens": 486,
+      "cost_usd": 0.0016069,
+      "latency_s": 4.02,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "ranking_top_promotion",
+      "set": "tuning",
+      "category": "ranking",
+      "question": "Which promotion brought in the most revenue?",
+      "follow_up_of": null,
+      "outcome": "wrong",
+      "passed": false,
+      "reason": "4 rows, expected top 1",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Among actual promotions, **Volume Discount 11 to 14** brought in the most revenue, at $2,005,230.23 all time. Lines with no promotion (\"No Discount\") earned $27,307,607.08, so most revenue came without any promotion applied. The Touring-1000 and Touring-3000 promotions contributed far less, at $30,992.91 and $14,847.00.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "promotion_name"
+        ],
+        "sort": [
+          {
+            "field": "revenue",
+            "dir": "desc"
+          }
+        ],
+        "limit": 5
+      },
+      "unverified": [
+        "1000",
+        "3000"
+      ],
+      "row_count": 4,
+      "input_tokens": 13451,
+      "output_tokens": 690,
+      "cost_usd": 0.0016901000000000002,
+      "latency_s": 5.06,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "ranking_least_profitable_models",
+      "set": "tuning",
+      "category": "ranking",
+      "question": "What are the 4 least profitable product models by gross margin?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "The four least profitable product models by gross margin (all time, in USD) are Racing Socks ($3,196.53), Bike Wash ($4,518.84), Cycling Cap ($4,528.26) and Patch kit ($4,574.30). Racing Socks is the lowest by a clear margin, and the other three are close together.\n\nI ranked by gross margin in dollars rather than margin %, and combined all size and colour variants under each model.",
+      "assumptions": [
+        "Least profitable means lowest gross margin in USD over all time, not margin %.",
+        "Product model is the grouping level, so size and colour variants are combined."
+      ],
+      "semantic_query": {
+        "measures": [
+          "gross_margin"
+        ],
+        "dimensions": [
+          "product_model"
+        ],
+        "sort": [
+          {
+            "field": "gross_margin",
+            "dir": "asc"
+          }
+        ],
+        "limit": 4,
+        "assumptions": [
+          "Least profitable means lowest gross margin in USD over all time, not margin %.",
+          "Product model is the grouping level, so size and colour variants are combined."
+        ]
+      },
+      "unverified": [],
+      "row_count": 4,
+      "input_tokens": 13637,
+      "output_tokens": 587,
+      "cost_usd": 0.0016572,
+      "latency_s": 4.49,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "time_monthly_2012",
+      "set": "tuning",
+      "category": "time",
+      "question": "Show revenue by month for 2012",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Monthly revenue in 2012 ranged from $358,877.89 in May to $624,502.17 in December. June ($555,160.14) and November ($537,955.52) were also strong, while March to May were the weakest months. The chart shows the monthly series, which is calendar-month based.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "order_date__month"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2012"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 12,
+      "input_tokens": 13821,
+      "output_tokens": 355,
+      "cost_usd": 0.0015596000000000002,
+      "latency_s": 3.68,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "time_yearly_2011_2013",
+      "set": "tuning",
+      "category": "time",
+      "question": "How did yearly revenue change between 2011 and 2013?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Revenue fell from $7,075,525.93 in 2011 to $5,842,485.20 in 2012, then rose sharply to $16,351,550.34 in 2013. 2013 was the strongest year of the three, with more than double the 2011 figure. Calendar years are used throughout.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "order_date__year"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "between",
+            "value": [
+              "2011",
+              "2013"
+            ]
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 3,
+      "input_tokens": 13366,
+      "output_tokens": 371,
+      "cost_usd": 0.0015221000000000002,
+      "latency_s": 3.67,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "time_quarterly_europe_orders",
+      "set": "tuning",
+      "category": "time",
+      "question": "Quarterly order counts for Europe in 2013",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Europe order counts rose each quarter in 2013: 1,134 in Q1, 1,528 in Q2, 1,657 in Q3 and 1,884 in Q4.\n\nI used the sales territory group (Europe) to define the region and calendar quarters for 2013.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "order_count"
+        ],
+        "dimensions": [
+          "order_date__quarter"
+        ],
+        "filters": [
+          {
+            "field": "sales_territory_group",
+            "op": "=",
+            "value": "Europe"
+          },
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 4,
+      "input_tokens": 13460,
+      "output_tokens": 497,
+      "cost_usd": 0.0015945,
+      "latency_s": 4.0,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "time_weekly_jan_2013",
+      "set": "tuning",
+      "category": "time",
+      "question": "Weekly revenue in January 2013",
+      "follow_up_of": null,
+      "outcome": "correct_flagged",
+      "passed": true,
+      "reason": "figures not in the data: 28",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Weekly revenue in January 2013 peaked at $207,206.06 in the week starting 2013-01-07 and was lowest at $98,234.69 in the week starting 2013-01-28. Weeks are labelled by their start date and the query filters to January, so the first week (starting 2012-12-31) counts only 1\u20136 January ($156,777.83) and the last week counts only 28\u201331 January. Those two edge weeks are partial, so they are not directly comparable with the full weeks in between.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "order_date__week"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013-01"
+          }
+        ]
+      },
+      "unverified": [
+        "28"
+      ],
+      "row_count": 5,
+      "input_tokens": 13439,
+      "output_tokens": 571,
+      "cost_usd": 0.0016294,
+      "latency_s": 4.53,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "synonym_turnover_canada",
+      "set": "tuning",
+      "category": "synonym",
+      "question": "What was our turnover in Canada?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Turnover (revenue) from customers in Canada over all time is $1,977,844.86. This uses the customer's country, and covers all order dates from 2010 to 2014.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "filters": [
+          {
+            "field": "customer_country",
+            "op": "=",
+            "value": "Canada"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8588,
+      "output_tokens": 158,
+      "cost_usd": 0.0009378,
+      "latency_s": 2.5,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "synonym_buyers_2013",
+      "set": "tuning",
+      "category": "synonym",
+      "question": "How many buyers did we have in 2013?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "In 2013 we had 17,429 distinct customers place at least one order. This uses calendar year 2013, since fiscal periods aren't modelled.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "customer_count"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8590,
+      "output_tokens": 150,
+      "cost_usd": 0.000934,
+      "latency_s": 2.03,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "synonym_cogs_bikes_2012",
+      "set": "tuning",
+      "category": "synonym",
+      "question": "What was the COGS for bikes in 2012?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "The cost of goods sold for bikes in 2012 was $3,413,241.57. This is the standard product cost of internet sales for the Bikes category, calendar year 2012 (calendar year is used because fiscal periods aren't modelled).",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "total_cost"
+        ],
+        "filters": [
+          {
+            "field": "product_category",
+            "op": "=",
+            "value": "Bikes"
+          },
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2012"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8623,
+      "output_tokens": 205,
+      "cost_usd": 0.0009648,
+      "latency_s": 2.12,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "followup_parent_category_2012",
+      "set": "tuning",
+      "category": "breakdown",
+      "question": "Revenue by product category in 2012",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Bikes dominated 2012 revenue at $5,839,695.33. Accessories brought in $2,147.08 and Clothing $642.79, so Bikes accounts for almost all internet sales that year. Revenue is calendar 2012, since fiscal periods aren't modelled.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "product_category"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2012"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 3,
+      "input_tokens": 13285,
+      "output_tokens": 355,
+      "cost_usd": 0.001506,
+      "latency_s": 3.89,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "followup_split_by_quarter",
+      "set": "tuning",
+      "category": "follow_up",
+      "question": "Now split that by quarter",
+      "follow_up_of": "followup_parent_category_2012",
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Bikes revenue rose through 2012, from $1,375,841.32 in Q1 to $1,694,827.30 in Q4, with a dip in Q2 to $1,314,373.65. Accessories ($2,147.08) and Clothing ($642.79) appear only in Q4, so the quarterly split is almost entirely Bikes. Quarters are calendar quarters.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "product_category",
+          "order_date__quarter"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2012"
+          }
+        ]
+      },
+      "unverified": [],
+      "row_count": 6,
+      "input_tokens": 14217,
+      "output_tokens": 786,
+      "cost_usd": 0.0018147,
+      "latency_s": 5.89,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "followup_parent_top_countries",
+      "set": "tuning",
+      "category": "ranking",
+      "question": "Top 3 countries by number of customers",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "The United States leads with 7,819 customers, followed by Australia with 3,591 and the United Kingdom with 1,913. These are all-time customer counts, since no period was specified.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "customer_count"
+        ],
+        "dimensions": [
+          "customer_country"
+        ],
+        "sort": [
+          {
+            "field": "customer_count",
+            "dir": "desc"
+          }
+        ],
+        "limit": 3
+      },
+      "unverified": [],
+      "row_count": 3,
+      "input_tokens": 13385,
+      "output_tokens": 342,
+      "cost_usd": 0.0015095,
+      "latency_s": 4.28,
+      "llm_calls": 3,
+      "tool_calls": 2,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "followup_aov_those_countries",
+      "set": "tuning",
+      "category": "follow_up",
+      "question": "What was the average order value in those countries?",
+      "follow_up_of": "followup_parent_top_countries",
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": false,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Average order value is highest in Australia at $1,348.76, followed by the United Kingdom at $1,119.01 and the United States at $981.48. These are all-time figures, and the countries are the same top 3 by customer count as before.",
+      "assumptions": [],
+      "semantic_query": {
+        "measures": [
+          "average_order_value",
+          "customer_count"
+        ],
+        "dimensions": [
+          "customer_country"
+        ],
+        "sort": [
+          {
+            "field": "customer_count",
+            "dir": "desc"
+          }
+        ],
+        "limit": 3
+      },
+      "unverified": [],
+      "row_count": 3,
+      "input_tokens": 14545,
+      "output_tokens": 839,
+      "cost_usd": 0.001874,
+      "latency_s": 5.61,
+      "llm_calls": 3,
+      "tool_calls": 3,
+      "rejected_queries": 1,
+      "error": null
+    },
+    {
+      "id": "ambiguous_last_year",
+      "set": "tuning",
+      "category": "ambiguous",
+      "question": "What was revenue last year?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": true,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Revenue for 2013 was $16,351,550.34. I took \"last year\" to mean calendar 2013, the latest full calendar year in the data, and revenue excludes tax and freight.",
+      "assumptions": [
+        "\"Last year\" interpreted as calendar year 2013, the latest full calendar year in the data (orders run to January 2014).",
+        "Revenue is invoiced sales value in USD, excluding tax and freight."
+      ],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "filters": [
+          {
+            "field": "order_date",
+            "op": "=",
+            "value": "2013"
+          }
+        ],
+        "assumptions": [
+          "\"Last year\" interpreted as calendar year 2013, the latest full calendar year in the data (orders run to January 2014).",
+          "Revenue is invoiced sales value in USD, excluding tax and freight."
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8673,
+      "output_tokens": 293,
+      "cost_usd": 0.0010138,
+      "latency_s": 2.73,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "ambiguous_best_customer",
+      "set": "tuning",
+      "category": "ambiguous",
+      "question": "Who is our best customer?",
+      "follow_up_of": null,
+      "outcome": "correct",
+      "passed": true,
+      "reason": "",
+      "review": true,
+      "status": "answered",
+      "declined_by": null,
+      "answer": "Our best customer by revenue over all time is Jordan Turner, with $15,999.10 in revenue. I measured \"best\" as total revenue across all orders, since no period was specified.",
+      "assumptions": [
+        "'Best customer' means the customer with the highest revenue across all time, since no period was given."
+      ],
+      "semantic_query": {
+        "measures": [
+          "revenue"
+        ],
+        "dimensions": [
+          "customer_name"
+        ],
+        "sort": [
+          {
+            "field": "revenue",
+            "dir": "desc"
+          }
+        ],
+        "limit": 1,
+        "assumptions": [
+          "'Best customer' means the customer with the highest revenue across all time, since no period was given."
+        ]
+      },
+      "unverified": [],
+      "row_count": 1,
+      "input_tokens": 8725,
+      "output_tokens": 302,
+      "cost_usd": 0.0010235,
+      "latency_s": 2.59,
+      "llm_calls": 2,
+      "tool_calls": 1,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "scope_listed_resellers",
+      "set": "tuning",
+      "category": "out_of_scope_listed",
+      "question": "How did our resellers perform in 2013?",
+      "follow_up_of": null,
+      "outcome": "declined_correctly",
+      "passed": true,
+      "reason": "declined by guard",
+      "review": false,
+      "status": "declined",
+      "declined_by": "guard",
+      "answer": "I can't answer that with the current model. This model covers internet (direct-to-consumer) sales only. Reseller sales are a separate fact table that isn't modelled yet.",
+      "assumptions": [],
+      "semantic_query": null,
+      "unverified": [],
+      "row_count": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 0.0,
+      "latency_s": 0.0,
+      "llm_calls": 0,
+      "tool_calls": 0,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "scope_listed_salesperson",
+      "set": "tuning",
+      "category": "out_of_scope_listed",
+      "question": "Which salesperson brought in the most revenue?",
+      "follow_up_of": null,
+      "outcome": "declined_correctly",
+      "passed": true,
+      "reason": "declined by guard",
+      "review": false,
+      "status": "declined",
+      "declined_by": "guard",
+      "answer": "I can't answer that with the current model. There is no employee data in this model. Internet sales aren't attributed to a salesperson.",
+      "assumptions": [],
+      "semantic_query": null,
+      "unverified": [],
+      "row_count": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cost_usd": 0.0,
+      "latency_s": 0.0,
+      "llm_calls": 0,
+      "tool_calls": 0,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "scope_unlisted_market_share",
+      "set": "tuning",
+      "category": "out_of_scope_unlisted",
+      "question": "What is our market share in Germany?",
+      "follow_up_of": null,
+      "outcome": "declined_correctly",
+      "passed": true,
+      "reason": "declined by model",
+      "review": false,
+      "status": "declined",
+      "declined_by": "model",
+      "answer": "I can't answer that with the current model. Market share needs total market sales in Germany, including competitors, and the model only holds this shop's internet sales. I can show our Germany revenue, orders and customers, or our revenue share within the Europe territory group, if either would help.",
+      "assumptions": [],
+      "semantic_query": null,
+      "unverified": [],
+      "row_count": 0,
+      "input_tokens": 4220,
+      "output_tokens": 184,
+      "cost_usd": 0.000514,
+      "latency_s": 1.81,
+      "llm_calls": 1,
+      "tool_calls": 0,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "scope_unlisted_web_visits",
+      "set": "tuning",
+      "category": "out_of_scope_unlisted",
+      "question": "How many people visited the website in December 2013?",
+      "follow_up_of": null,
+      "outcome": "declined_correctly",
+      "passed": true,
+      "reason": "declined by model",
+      "review": false,
+      "status": "declined",
+      "declined_by": "model",
+      "answer": "I can't answer that with the current model. It covers internet sales transactions only, with no website traffic, visitor or session data. I can give you the number of customers who placed an order in December 2013 (customer_count), if that's useful.",
+      "assumptions": [],
+      "semantic_query": null,
+      "unverified": [],
+      "row_count": 0,
+      "input_tokens": 4223,
+      "output_tokens": 170,
+      "cost_usd": 0.0005073,
+      "latency_s": 1.58,
+      "llm_calls": 1,
+      "tool_calls": 0,
+      "rejected_queries": 0,
+      "error": null
+    },
+    {
+      "id": "scope_unlisted_net_profit",
+      "set": "tuning",
+      "category": "out_of_scope_unlisted",
+      "question": "What was our net profit after overheads in 2013?",
+      "follow_up_of": null,
+      "outcome": "declined_correctly",
+      "passed": true,
+      "reason": "declined by model",
+      "review": false,
+      "status": "declined",
+      "declined_by": "model",
+      "answer": "I can't answer that with the current model. It holds sales, product cost, tax and freight, but no operating expenses or overheads, so net profit after overheads can't be calculated. The closest available figure is gross margin (revenue minus product cost), which I can report for 2013 if you'd like.",
+      "assumptions": [],
+      "semantic_query": null,
+      "unverified": [],
+      "row_count": 0,
+      "input_tokens": 4225,
+      "output_tokens": 221,
+      "cost_usd": 0.000533,
+      "latency_s": 1.86,
+      "llm_calls": 1,
+      "tool_calls": 0,
+      "rejected_queries": 0,
+      "error": null
+    }
+  ],
+  "summary": {
+    "questions": 32,
+    "passed": 31,
+    "accuracy": 0.969,
+    "outcomes": {
+      "correct": 24,
+      "correct_flagged": 2,
+      "wrong": 1,
+      "declined_correctly": 5
+    },
+    "by_category": {
+      "ambiguous": {
+        "passed": 2,
+        "of": 2
+      },
+      "breakdown": {
+        "passed": 6,
+        "of": 6
+      },
+      "follow_up": {
+        "passed": 2,
+        "of": 2
+      },
+      "lookup": {
+        "passed": 5,
+        "of": 5
+      },
+      "out_of_scope_listed": {
+        "passed": 2,
+        "of": 2
+      },
+      "out_of_scope_unlisted": {
+        "passed": 3,
+        "of": 3
+      },
+      "ranking": {
+        "passed": 4,
+        "of": 5
+      },
+      "synonym": {
+        "passed": 3,
+        "of": 3
+      },
+      "time": {
+        "passed": 4,
+        "of": 4
+      }
+    },
+    "declined_by": {
+      "guard": 2,
+      "model": 3
+    },
+    "flagged_figure_answers": 3,
+    "avg_latency_s": 3.1,
+    "total_cost_usd": 0.038133,
+    "cost_per_question_usd": 0.001192,
+    "avg_tool_calls": 1.41,
+    "rejected_queries": 1
+  }
+}

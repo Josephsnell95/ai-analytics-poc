@@ -231,6 +231,9 @@ def make_provider(name: str, settings: Settings) -> Provider:
 
 
 # ------------------------------------------------------------------ helpers
+RUN_QUERY_KEYS = {"measures", "dimensions", "filters", "sort", "limit", "assumptions"}
+
+
 def _new_id() -> str:
     return "call_" + uuid.uuid4().hex[:12]
 
@@ -257,4 +260,27 @@ def _tool_call_from_text(text: str, tool_names: set[str]) -> ToolCall | None:
     args = obj.get("parameters", obj.get("arguments", {}))
     if name in tool_names and isinstance(args, dict):
         return ToolCall(_new_id(), name, args)
+    # A bare semantic query as the reply: {"measures": [...], ...} with nothing else.
+    # Only run_query takes these keys, so there's no doubt about which tool was meant.
+    if "run_query" in tool_names and "measures" in obj and set(obj) <= RUN_QUERY_KEYS:
+        return ToolCall(_new_id(), "run_query", obj)
     return None
+
+
+# --------------------------------------------------------------- availability
+def provider_status(name: str, settings: Settings) -> tuple[bool, str]:
+    """Whether a provider can be used right now, and a one-line reason."""
+    cfg = settings.provider(name)
+    if name == "anthropic":
+        if env("ANTHROPIC_API_KEY"):
+            return True, f"API key found · {cfg['model']}"
+        return False, "No ANTHROPIC_API_KEY in .env"
+    host = env("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
+    try:
+        r = requests.get(f"{host}/api/tags", timeout=1.5)
+        models = {m.get("name") for m in r.json().get("models", [])}
+    except (requests.RequestException, ValueError):
+        return False, f"Ollama isn't running at {host}. Start the Ollama app"
+    if cfg["model"] not in models:
+        return False, f"Run: ollama pull {cfg['model']}"
+    return True, f"Ollama running · {cfg['model']}"

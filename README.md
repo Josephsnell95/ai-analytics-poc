@@ -14,7 +14,7 @@ Runs entirely on a laptop against Microsoft's public AdventureWorksDW sample (In
 | 2. Semantic model + compiler, no LLM | Done |
 | 3. Agent loop as a CLI | Done: 10/10 smoke questions on both models (see below) |
 | 4. Streamlit chat | Done |
-| 5. Evaluation harness | |
+| 5. Evaluation harness | Built; needs a run on each model, and the held-out questions |
 | 6. Saved gallery, sharing between demo users, correction log | |
 
 ## Quick start
@@ -28,7 +28,7 @@ py -m venv .venv
 .venv\Scripts\activate                 # if scripts are blocked: Set-ExecutionPolicy -Scope CurrentUser RemoteSigned
 pip install -r requirements.txt
 python data/load.py --verify            # downloads the sample (~17 MB) and builds data/adventureworks.duckdb
-pytest                                  # 245 tests, a few seconds
+pytest                                  # 293 tests, a few seconds
 streamlit run app/main.py               # opens the chat in your browser
 ```
 
@@ -72,6 +72,23 @@ Every question is logged to `data/app_state.sqlite` (table `question_log`) with 
 
 Expect Llama on a laptop CPU to take 30 to 90 seconds per question: each model call re-reads a prompt of around 2,000 tokens. Haiku answers in a few seconds for well under a cent.
 
+## Evaluation
+
+How often it's right, what it costs and how long it takes, per model, on a fixed question set.
+
+```powershell
+python -m evals check                    # validate the questions and print each expected answer
+python -m evals run -p anthropic         # tuning set on Claude Haiku: a few minutes, a few pence
+python -m evals run                      # ...on Llama: about an hour on a laptop CPU
+python -m evals report                   # results table, also written to evals/results/summary.md
+```
+
+- **Two question sets.** `evals/questions.yaml` is the tuning set (32 questions): it can be looked at while improving prompts and descriptions. `evals/heldout.yaml` is written separately by someone who hasn't seen the tuning work, and is never used for tuning. The accuracy to quote comes from the held-out set.
+- **Scored on values, not on the query.** Each question has a reference semantic query, checked by a person, which the compiler turns into the expected rows. The agent's own result is compared with those rows, so any query that gets the right numbers counts. Rankings accept ties at the cut-off; single totals accept a breakdown that contains the right row. `evals/scoring.py` has the rules, and a test confirms that an agent running exactly the reference queries scores 100%.
+- **Outcomes:** correct, correct but with a flagged figure in the answer, declined correctly (by the guard or by the model), wrong, wrongly declined, answered something out of scope, no query, or provider error.
+- **Categories:** lookups, breakdowns, rankings, time, synonyms, follow-ups (asked straight after their parent, in the same chat), ambiguous questions (flagged for a person to judge the stated assumption), and out-of-scope questions both on and off the known-gaps list.
+- **Each results file records the configuration**: model, git commit, and hashes of the system prompt and semantic model, so a score can always be tied to what produced it. Results are written after every question; an interrupted run carries on with `--resume <file>`. A run stops itself after three provider errors in a row.
+
 ## Running semantic queries by hand
 
 To check the compiler without any LLM, pass a query file (inline JSON gets mangled by Windows shell quoting):
@@ -102,6 +119,7 @@ question ─▶ agent ─▶ semantic query (JSON) ─▶ compiler ─▶ SQL �
 | `agent/verify.py` | Checks the figures in a written answer against the query result. |
 | `agent/log.py` | SQLite question log. |
 | `app/main.py`, `app/ui.py` | Streamlit chat: the page, and how an answer is rendered. |
+| `evals/` | Question sets, scorer, runner and results. |
 | `config.yaml` | Models, row limits, tool-call cap, paths. |
 | `agent/prices.yaml` | Per-token prices. |
 
@@ -147,6 +165,7 @@ Filter ops depend on the field: `=`, `!=`, `in`, `not_in`, `contains`, `is_null`
 - **Time grains compile to `DATE_TRUNC`.** Date filters always apply to the underlying date, not the truncated one.
 - **Derived measures expand into their base aggregates**, so `gross_margin_pct` means the same thing in every query.
 - **Sums only on the fact table.** The model refuses a `sum` or `avg` defined on a dimension table, because at fact grain it would be repeated per order line. `count_distinct` is allowed because it is the one aggregation that stays correct.
+- **Text filter values are checked against the data** for any dimension with up to 300 values. A value that doesn't exist is rejected with a pointer: "'Europe' is not a value of customer_country. It is a value of sales_territory_group". Without this, a wrong field silently returns nothing, and in testing Llama then invented an answer. Values are read from the dimension tables, so a real value with no sales (the Components category) is valid and gives zero.
 - **Filter values are bound parameters**, never pasted into SQL. That matters more than usual here because the values come from an LLM. The SQL shown to users has values inlined for readability; the SQL that runs does not.
 - **Every query has a limit and a full sort order**, so a limited result is the same every time.
 

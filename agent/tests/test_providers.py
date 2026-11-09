@@ -127,3 +127,17 @@ def test_anthropic_bad_key():
     with patch("agent.providers.requests.post", return_value=MagicMock(ok=False, status_code=401, text="")):
         with pytest.raises(ProviderError, match="rejected the API key"):
             anthropic().chat("s", [], TOOLS)
+
+
+def test_ollama_recovers_bare_query_written_as_text():
+    # First eval run: Llama answered a follow-up with the query itself as its reply.
+    content = ('{"measures": ["average_order_value"], "dimensions": ["customer_country"], '
+               '"limit": 3, "sort": [{"field": "customer_count", "dir": "desc"}]}')
+    r = OllamaProvider._from_wire({"message": {"content": content}}, TOOL_NAMES)
+    assert r.text == "" and r.tool_calls[0].name == "run_query"
+    assert r.tool_calls[0].arguments["measures"] == ["average_order_value"]
+
+
+def test_json_with_other_keys_is_not_treated_as_a_query():
+    r = OllamaProvider._from_wire({"message": {"content": '{"measures": ["revenue"], "note": "x"}'}}, TOOL_NAMES)
+    assert r.tool_calls == []

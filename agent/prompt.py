@@ -27,7 +27,8 @@ HOW TO ANSWER
    - Filters go in "filters", never inside "dimensions".
    - For a whole year, quarter or month, filter with the period itself: "2013", "2013-Q2" or "2013-03".
      To span several periods use ONE between filter, e.g. ["2012", "2013"], and group by a time grain to compare them.
-   - Only set "limit" for top-N questions, and then sort by the measure, descending.
+   - Only set "limit" for top-N questions, and sort by the measure: descending for "top", "most", "highest", "best";
+     ascending for "least", "lowest", "bottom", "worst".
 3. If the question follows on from an earlier one ("those", "that", "now by month", "as a chart"),
    start from the query behind the earlier answer and change only what is asked: keep its sort, limit and filters
    unless the question changes them. Always call run_query again; never reuse numbers from an earlier answer.

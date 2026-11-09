@@ -71,3 +71,27 @@ def test_truncated_figure_matches():
 @pytest.mark.parametrize("phrase", ["1 January to December 31", "31st December", "Dec 31", "from 15 March"])
 def test_days_of_month_ignored(phrase):
     assert unverified_figures(f"Revenue was $5 over {phrase}.", [{"revenue": 5.0}], {"revenue": "currency"}) == []
+
+
+# ------------------------------------------- from the first eval run (2026-11-06)
+@pytest.mark.parametrize("answer, rows, fmt", [
+    ("The gross margin percentage on clothing is 40.2%.",                       # 40.148%: last-digit slip
+     [{"gross_margin_pct": 0.40148196848474627}], {"gross_margin_pct": "percent"}),
+    ('"No Discount" brought in $27,307,608 in revenue.',                        # 27,307,607.08
+     [{"promotion_name": "No Discount", "revenue": 27307607.0825}], {"promotion_name": None, "revenue": "currency"}),
+    ("The Touring-1000 and Touring-3000 promotions contributed far less, at $30,992.91 and $14,847.00.",
+     [{"promotion_name": "Touring-1000 Promotion", "revenue": 30992.91},
+      {"promotion_name": "Touring-3000 Promotion", "revenue": 14847.0}], {"promotion_name": None, "revenue": "currency"}),
+    ("The first week counts only 1–6 January ($156,777.83) and the last only 28–31 January.",
+     [{"order_date__week": "2012-12-31", "revenue": 156777.83}], {"order_date__week": None, "revenue": "currency"}),
+])
+def test_logged_false_positives_now_pass(answer, rows, fmt):
+    assert unverified_figures(answer, rows, fmt) == []
+
+
+@pytest.mark.parametrize("answer, rows, flagged", [
+    ("Bachelors brought in $5,628,848.91.", [{"revenue": 5625848.91}], ["$5,628,848.91"]),   # digit misread
+    ("The revenue for 2012 was $5,983,419.41.", [{"revenue": 624502.17}], ["$5,983,419.41"]), # invented total
+])
+def test_logged_real_errors_still_flagged(answer, rows, flagged):
+    assert unverified_figures(answer, rows, {"revenue": "currency"}) == flagged

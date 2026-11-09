@@ -7,10 +7,10 @@ import copy
 import datetime as dt
 import json
 
-import requests
 import streamlit as st
 
-from agent.config import Settings, env
+from agent import providers
+from agent.config import Settings
 from agent.loop import AgentResult
 
 PROVIDER_LABELS = {
@@ -28,21 +28,7 @@ EXAMPLE_QUESTIONS = [
 
 # ------------------------------------------------------------ availability
 def provider_status(name: str, settings: Settings) -> tuple[bool, str]:
-    """Whether a provider can be used right now, and a one-line reason."""
-    cfg = settings.provider(name)
-    if name == "anthropic":
-        if env("ANTHROPIC_API_KEY"):
-            return True, f"API key found · {cfg['model']}"
-        return False, "No ANTHROPIC_API_KEY in .env"
-    host = env("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
-    try:
-        r = requests.get(f"{host}/api/tags", timeout=1.5)
-        models = {m.get("name") for m in r.json().get("models", [])}
-    except (requests.RequestException, ValueError):
-        return False, f"Ollama isn't running at {host}. Start the Ollama app"
-    if cfg["model"] not in models:
-        return False, f"Run: ollama pull {cfg['model']}"
-    return True, f"Ollama running · {cfg['model']}"
+    return providers.provider_status(name, settings)
 
 
 # ------------------------------------------------------------------ result

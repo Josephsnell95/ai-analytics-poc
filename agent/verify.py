@@ -6,8 +6,8 @@ that, so every number in the answer is checked here, and any that doesn't
 match a value in the result rows is flagged to the user.
 
 A figure matches when it equals some result value at the precision it was
-written, rounded or truncated: "$15.36 million" matches 15,359,502.36, "41.4%"
-matches 0.4137, and "$668,241" matches 668,241.53. A flagged figure isn't necessarily wrong (it
+written, give or take one in the last digit: "$15.36 million" matches
+15,359,502.36, "41.4%" matches 0.4137, and "$668,241" matches 668,241.53. A flagged figure isn't necessarily wrong (it
 could be a correct sum the model worked out), but it isn't in the data, and the
 prompt tells the model not to do its own arithmetic.
 """
@@ -29,8 +29,12 @@ QUARTER_RE = re.compile(r"\b(?:\d{4}[- ]?)?Q[1-4]\b", re.IGNORECASE)
 LIST_MARKER_RE = re.compile(r"^\s*\d+[.)]\s", re.MULTILINE)
 _MONTHS = (r"(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|"
            r"Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)")
-# "December 31", "31st December", "1 January": days of the month, not figures.
-DAY_OF_MONTH_RE = re.compile(rf"\b(?:{_MONTHS}\s+\d{{1,2}}(?:st|nd|rd|th)?|\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTHS})\b")
+# "December 31", "31st December", "1 January", "28–31 January": days of the month, not figures.
+_DAY = r"\d{1,2}(?:st|nd|rd|th)?"
+DAY_OF_MONTH_RE = re.compile(
+    rf"\b(?:{_MONTHS}\s+{_DAY}(?:\s?[-–]\s?{_DAY})?|{_DAY}(?:\s?[-–]\s?{_DAY})?\s+{_MONTHS})\b")
+# Numbers that are part of a name: "Mountain-200", "Touring-1000", "Road-150 Red".
+NAME_NUMBER_RE = re.compile(r"\b[A-Za-z]+-\d+\b")
 
 
 def unverified_figures(answer: str, rows: list[dict], formats: dict[str, str | None]) -> list[str]:
@@ -46,9 +50,7 @@ def unverified_figures(answer: str, rows: list[dict], formats: dict[str, str | N
         written, half_unit = _parse(m)
         if written is None or _is_incidental(m, written):
             continue
-        # Rounded (within half a unit either way) or truncated (up to a whole unit
-        # below the true value): "$668,241" for 668,241.53 is cutting off the cents.
-        if not any(-half_unit <= abs(v) - abs(written) < 2 * half_unit for v in values):
+        if not any(_close(written, v, half_unit) for v in values):
             if figure not in flagged:
                 flagged.append(figure)
     return flagged
@@ -60,7 +62,7 @@ def _strip_non_figures(answer: str, rows: list[dict]) -> str:
     labels = {str(v) for row in rows for v in row.values() if isinstance(v, str)}
     for label in sorted(labels, key=len, reverse=True):   # longest first, so "Road-150" before "150"
         answer = answer.replace(label, " ")
-    for pattern in (ISO_DATE_RE, DAY_OF_MONTH_RE, QUARTER_RE, LIST_MARKER_RE):
+    for pattern in (ISO_DATE_RE, DAY_OF_MONTH_RE, NAME_NUMBER_RE, QUARTER_RE, LIST_MARKER_RE):
         answer = pattern.sub(" ", answer)
     return answer
 
@@ -91,6 +93,18 @@ def _parse(m: re.Match) -> tuple[Decimal | None, Decimal]:
         exponent = 0   # a bare "5 m" is too ambiguous to scale
     tolerance = Decimal(5) * Decimal(10) ** (exponent - decimals - 1)
     return value * Decimal(10) ** exponent, tolerance
+
+
+def _close(written: Decimal, value: Decimal, half_unit: Decimal) -> bool:
+    """Properly rounded, or out by less than one in the last digit and by under 0.2%.
+    The second allows truncation ("$668,241" for 668,241.53) and last-digit slips
+    ("40.2%" for 40.15%, "$27,307,608" for 27,307,607.08) that no reader would act on,
+    without letting coarse figures drift ("$28.4 million" for 28.32 million is flagged).
+    A misread like $5,628,848 for $5,625,848 is thousands of units out: always flagged."""
+    diff = abs(abs(value) - abs(written))
+    if diff <= half_unit:
+        return True
+    return diff < 2 * half_unit and value != 0 and diff / abs(value) < Decimal("0.002")
 
 
 def _is_incidental(m: re.Match, value: Decimal) -> bool:

@@ -1,0 +1,22 @@
+# Evaluation questions: the HELD-OUT set. The reported accuracy comes from these.
+#
+# Rules that keep the figure honest:
+#   1. Written by someone who hasn't been tuning prompts or descriptions.
+#   2. Never used to tune anything. If a held-out question exposes a bug, fix it,
+#      but the question moves to questions.yaml and is replaced with a new one.
+#   3. Reference queries are added in a separate step, after the questions are
+#      written, without changing the questions.
+#
+# To add a question, write only these three lines and leave the rest for later:
+#
+#   - id: h01
+#     category: lookup        # lookup, breakdown, ranking, time, synonym, follow_up,
+#                             # ambiguous, out_of_scope_listed, out_of_scope_unlisted
+#     question: What was revenue from bikes in 2012?
+#
+# For a question that follows on from the one before it, add:  follow_up_of: h01
+# For a question you think it shouldn't be able to answer, add:  expect: decline
+#
+# Questions without a reference are listed as "needs reference" and not run.
+
+[]

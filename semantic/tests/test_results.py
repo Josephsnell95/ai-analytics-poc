@@ -136,10 +136,64 @@ def test_dimension_only_query_lists_values_present_in_sales(engine):
 
 
 def test_injection_attempt_is_just_a_value(engine):
+    # Rejected as an unknown value before anything runs; on a dimension too large to
+    # check, it's a bound parameter that simply matches nothing.
+    from semantic import QueryValidationError
+    with pytest.raises(QueryValidationError, match="is not a value of product_category"):
+        engine.run({"measures": ["revenue"], "filters": [
+            {"field": "product_category", "op": "=", "value": "x'; DROP TABLE FactInternetSales; --"}]})
     rows = engine.run({"measures": ["revenue"], "filters": [
-        {"field": "product_category", "op": "=", "value": "x'; DROP TABLE FactInternetSales; --"}]}).rows
+        {"field": "customer_city", "op": "=", "value": "x'; DROP TABLE FactInternetSales; --"}]}).rows
     assert rows == [(None,)]
     assert engine.con.execute("SELECT COUNT(*) FROM FactInternetSales").fetchone()[0] == 60398
+
+
+# ------------------------------------------------------------ filter values
+from semantic import QueryValidationError  # noqa: E402
+
+
+def _error(engine, field, value, op="="):
+    with pytest.raises(QueryValidationError) as e:
+        engine.run({"measures": ["revenue"], "filters": [{"field": field, "op": op, "value": value}]})
+    return " | ".join(e.value.errors)
+
+
+def test_value_from_another_dimension_is_redirected(engine):
+    # First eval run: Llama filtered customer_country = "Europe" and got nothing back.
+    assert "It is a value of sales_territory_group" in _error(engine, "customer_country", "Europe")
+
+
+def test_wrong_case_suggests_exact_value(engine):
+    assert "Did you mean 'Bikes'? Values are case-sensitive" in _error(engine, "product_category", "bikes")
+
+
+def test_typo_suggests_close_value(engine):
+    assert "Did you mean 'Germany'" in _error(engine, "customer_country", "Germny")
+
+
+def test_unknown_value_lists_valid_ones(engine):
+    assert "Valid values: 'Europe', 'NA', 'North America', 'Pacific'" in _error(engine, "sales_territory_group", "Asia")
+
+
+def test_every_value_in_a_list_is_checked(engine):
+    assert "'Narnia' is not a value" in _error(engine, "customer_country", ["France", "Narnia"], op="in")
+
+
+def test_real_value_with_no_sales_is_valid_and_gives_nothing(engine):
+    rows = engine.run({"measures": ["revenue"], "filters": [
+        {"field": "product_category", "op": "=", "value": "Components"}]}).rows
+    assert rows == [(None,)]
+
+
+def test_high_cardinality_dimension_not_checked(engine):
+    assert engine.dimension_values("customer_city") is None
+    assert engine.run({"measures": ["revenue"], "filters": [
+        {"field": "customer_city", "op": "=", "value": "Nowhereville"}]}).rows == [(None,)]
+
+
+def test_contains_filter_not_checked(engine):
+    engine.run({"measures": ["revenue"], "filters": [
+        {"field": "product_category", "op": "contains", "value": "bik"}]})
 
 
 def test_records_are_json_friendly(engine):

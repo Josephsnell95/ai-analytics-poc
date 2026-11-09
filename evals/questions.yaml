@@ -1,0 +1,275 @@
+# Evaluation questions: the TUNING set.
+#
+# These may be looked at while improving prompts and descriptions. The accuracy
+# figure to report comes from the HELD-OUT set (evals/heldout.yaml), written
+# separately by someone who hasn't seen these or the tuning work.
+#
+# Each question has a reference semantic query, checked by a person; the
+# compiler turns it into the expected values. The agent is scored on the values
+# its own query returned, so any query that gets the right numbers counts.
+# See evals/scoring.py for the match rules.
+#
+# Fields:
+#   id           unique, stable (results files refer to it)
+#   category     lookup, breakdown, ranking, time, synonym, follow_up, ambiguous,
+#                out_of_scope_listed (the guard should catch it),
+#                out_of_scope_unlisted (only the model can catch it)
+#   question     exactly what is typed
+#   reference    the semantic query whose result is the right answer
+#   alternatives other references that are also right (optional)
+#   expect       "decline" for questions the model can't answer (no reference)
+#   follow_up_of id of the question asked just before, in the same chat
+#   match        exact | contains | ordered (optional; inferred, see scoring.py)
+#   review       true when a person should judge the stated assumption
+#   note         why the question is here, or what makes it tricky
+
+# --------------------------------------------------------------- lookups
+- id: lookup_orders_2012
+  category: lookup
+  question: How many orders were placed in 2012?
+  reference: {measures: [order_count], filters: [{field: order_date, op: "=", value: "2012"}]}
+
+- id: lookup_aov_2013
+  category: lookup
+  question: What was the average order value in 2013?
+  reference: {measures: [average_order_value], filters: [{field: order_date, op: "=", value: "2013"}]}
+
+- id: lookup_freight_total
+  category: lookup
+  question: How much have we charged in freight in total?
+  reference: {measures: [freight]}
+
+- id: lookup_clothing_margin_pct
+  category: lookup
+  question: What is the gross margin percentage on clothing?
+  reference: {measures: [gross_margin_pct], filters: [{field: product_category, op: "=", value: Clothing}]}
+
+- id: lookup_helmets_q3
+  category: lookup
+  question: How many helmets did we sell in Q3 2013?
+  reference:
+    measures: [units_sold]
+    filters: [{field: product_subcategory, op: "=", value: Helmets}, {field: order_date, op: "=", value: "2013-Q3"}]
+
+# ------------------------------------------------------------ breakdowns
+- id: breakdown_territory_group
+  category: breakdown
+  question: Show revenue for each sales territory group
+  reference: {measures: [revenue], dimensions: [sales_territory_group]}
+
+- id: breakdown_gender_orders
+  category: breakdown
+  question: Break down the number of orders by customer gender
+  reference: {measures: [order_count], dimensions: [customer_gender]}
+
+- id: breakdown_education_2013
+  category: breakdown
+  question: What was 2013 revenue by customer education level?
+  reference:
+    measures: [revenue]
+    dimensions: [customer_education]
+    filters: [{field: order_date, op: "=", value: "2013"}]
+
+- id: breakdown_product_line_margin
+  category: breakdown
+  question: What's the margin percentage for each product line?
+  reference: {measures: [gross_margin_pct], dimensions: [product_line]}
+
+- id: breakdown_accessory_colours
+  category: breakdown
+  question: Units sold by colour for accessories
+  reference:
+    measures: [units_sold]
+    dimensions: [product_color]
+    filters: [{field: product_category, op: "=", value: Accessories}]
+  note: Most accessories have colour "NA"; the agent shouldn't filter it out.
+
+# --------------------------------------------------------------- rankings
+- id: ranking_cities_customers
+  category: ranking
+  question: Which 5 cities have the most customers?
+  reference:
+    measures: [customer_count]
+    dimensions: [customer_city]
+    sort: [{field: customer_count, dir: desc}]
+    limit: 5
+  note: Beaverton and Bellingham tie on 210 at 5th place; either is right.
+
+- id: ranking_subcategories_units_2012
+  category: ranking
+  question: Top 3 subcategories by units sold in 2012
+  reference:
+    measures: [units_sold]
+    dimensions: [product_subcategory]
+    filters: [{field: order_date, op: "=", value: "2012"}]
+    sort: [{field: units_sold, dir: desc}]
+    limit: 3
+
+- id: ranking_top_promotion
+  category: ranking
+  question: Which promotion brought in the most revenue?
+  reference:
+    measures: [revenue]
+    dimensions: [promotion_name]
+    sort: [{field: revenue, dir: desc}]
+    limit: 1
+  note: The answer is "No Discount", which a model may find odd to report.
+
+- id: ranking_least_profitable_models
+  category: ranking
+  question: What are the 4 least profitable product models by gross margin?
+  reference:
+    measures: [gross_margin]
+    dimensions: [product_model]
+    sort: [{field: gross_margin, dir: asc}]
+    limit: 4
+
+# ------------------------------------------------------------------- time
+- id: time_monthly_2012
+  category: time
+  question: Show revenue by month for 2012
+  reference:
+    measures: [revenue]
+    dimensions: [order_date__month]
+    filters: [{field: order_date, op: "=", value: "2012"}]
+
+- id: time_yearly_2011_2013
+  category: time
+  question: How did yearly revenue change between 2011 and 2013?
+  reference:
+    measures: [revenue]
+    dimensions: [order_date__year]
+    filters: [{field: order_date, op: between, value: ["2011", "2013"]}]
+
+- id: time_quarterly_europe_orders
+  category: time
+  question: Quarterly order counts for Europe in 2013
+  reference:
+    measures: [order_count]
+    dimensions: [order_date__quarter]
+    filters: [{field: sales_territory_group, op: "=", value: Europe}, {field: order_date, op: "=", value: "2013"}]
+
+- id: time_weekly_jan_2013
+  category: time
+  question: Weekly revenue in January 2013
+  reference:
+    measures: [revenue]
+    dimensions: [order_date__week]
+    filters: [{field: order_date, op: "=", value: "2013-01"}]
+  note: The first week starts on Monday 31 Dec 2012 but only counts January days.
+
+# --------------------------------------------------------------- synonyms
+- id: synonym_turnover_canada
+  category: synonym
+  question: What was our turnover in Canada?
+  reference: {measures: [revenue], filters: [{field: customer_country, op: "=", value: Canada}]}
+  alternatives:
+    - {measures: [revenue], filters: [{field: sales_territory_country, op: "=", value: Canada}]}
+
+- id: synonym_buyers_2013
+  category: synonym
+  question: How many buyers did we have in 2013?
+  reference: {measures: [customer_count], filters: [{field: order_date, op: "=", value: "2013"}]}
+
+- id: synonym_cogs_bikes_2012
+  category: synonym
+  question: What was the COGS for bikes in 2012?
+  reference:
+    measures: [total_cost]
+    filters: [{field: product_category, op: "=", value: Bikes}, {field: order_date, op: "=", value: "2012"}]
+
+# ------------------------------------------------------------- follow-ups
+# A follow-up is asked straight after its parent, in the same chat, and scored on
+# its own reference. Parents are scored too.
+- id: followup_parent_category_2012
+  category: breakdown
+  question: Revenue by product category in 2012
+  reference:
+    measures: [revenue]
+    dimensions: [product_category]
+    filters: [{field: order_date, op: "=", value: "2012"}]
+
+- id: followup_split_by_quarter
+  category: follow_up
+  follow_up_of: followup_parent_category_2012
+  question: Now split that by quarter
+  reference:
+    measures: [revenue]
+    dimensions: [product_category, order_date__quarter]
+    filters: [{field: order_date, op: "=", value: "2012"}]
+  note: Must keep the 2012 filter and the category breakdown.
+
+- id: followup_parent_top_countries
+  category: ranking
+  question: Top 3 countries by number of customers
+  reference:
+    measures: [customer_count]
+    dimensions: [customer_country]
+    sort: [{field: customer_count, dir: desc}]
+    limit: 3
+
+- id: followup_aov_those_countries
+  category: follow_up
+  follow_up_of: followup_parent_top_countries
+  question: What was the average order value in those countries?
+  reference:
+    measures: [average_order_value]
+    dimensions: [customer_country]
+    filters: [{field: customer_country, op: in, value: [United States, Australia, United Kingdom]}]
+  match: exact
+  note: >-
+    "Those" means the same three countries. Keeping the top-3 sort and limit,
+    or filtering to the three by name, both give the right rows.
+
+# ------------------------------------------------------------- ambiguous
+- id: ambiguous_last_year
+  category: ambiguous
+  question: What was revenue last year?
+  reference: {measures: [revenue], filters: [{field: order_date, op: "=", value: "2013"}]}
+  review: true
+  note: 2013 is the latest full year. 2014 has only January ($45,695), so treating it as "last year" is wrong.
+
+- id: ambiguous_best_customer
+  category: ambiguous
+  question: Who is our best customer?
+  reference:
+    measures: [revenue]
+    dimensions: [customer_name]
+    sort: [{field: revenue, dir: desc}]
+    limit: 1
+  match: contains
+  review: true
+  note: >-
+    "Best" most reasonably means revenue over all time (ai_context says so for
+    "top customers"). Scored on the top customer appearing with the right revenue,
+    so a top 5 or top 10 also counts.
+
+# ------------------------------------------- out of scope, on the gaps list
+- id: scope_listed_resellers
+  category: out_of_scope_listed
+  question: How did our resellers perform in 2013?
+  expect: decline
+
+- id: scope_listed_salesperson
+  category: out_of_scope_listed
+  question: Which salesperson brought in the most revenue?
+  expect: decline
+
+# --------------------------------------- out of scope, not on the gaps list
+- id: scope_unlisted_market_share
+  category: out_of_scope_unlisted
+  question: What is our market share in Germany?
+  expect: decline
+  note: Needs competitor data. The model has to recognise this on its own.
+
+- id: scope_unlisted_web_visits
+  category: out_of_scope_unlisted
+  question: How many people visited the website in December 2013?
+  expect: decline
+  note: Visits aren't orders; customer_count or order_count would be a wrong answer.
+
+- id: scope_unlisted_net_profit
+  category: out_of_scope_unlisted
+  question: What was our net profit after overheads in 2013?
+  expect: decline
+  note: Only gross margin exists. Answering with gross margin passes off one figure as another.

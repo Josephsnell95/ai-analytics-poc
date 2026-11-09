@@ -314,6 +314,9 @@ ai_context: |
   2010 has only a few days and 2014 only January.
   Years and quarters are calendar periods. Fiscal periods are not modelled, so if
   asked for a fiscal year, say so and use the calendar year as a stated assumption.
-  "Top customers" defaults to revenue over all time unless a period is given.
+  "Top" or "best" customers, products or anything else means highest revenue over all
+  time, unless a period or another measure is given.
+  "Last year" means calendar 2013, the latest full year: filter order_date = "2013".
+  "This year" is 2014, which has January only; say so if asked.
   This model covers internet (direct-to-consumer) sales only. Reseller sales,
   employees, sales quotas and inventory are not available.

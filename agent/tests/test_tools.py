@@ -54,7 +54,7 @@ def test_run_query_caps_rows_shown_to_model(engine):
 def test_run_query_empty_result_hint(engine):
     tools = Tools(engine, rows_to_llm=50)
     out = json.loads(tools.run_query({"measures": ["revenue"], "dimensions": ["product_category"],
-                                      "filters": [{"field": "product_category", "op": "=", "value": "Bicycles"}]}))
+                                      "filters": [{"field": "product_category", "op": "=", "value": "Components"}]}))
     assert out["row_count"] == 0 and "2010-12-29 to 2014-01-28" in out["note"]
 
 

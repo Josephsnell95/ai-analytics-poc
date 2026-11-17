@@ -1,0 +1,126 @@
+# Settings for the fictitious finance dataset (python -m finance.generate).
+#
+# Everything here is a starting assumption, not a fact about any real company.
+# Change a number, regenerate, and the reconciliation tests tell you whether the
+# data still ties up. The same seed always produces the same data.
+
+seed: 20261031
+today: 2026-10-31          # the company's fixed "today": data stops here, evals score as at this date
+history_start: 2023-11-01  # three full years of history before today
+
+company: Northfield Industrial Supply Ltd   # invented; GBP only, UK VAT
+
+customers: 400
+suppliers: 150             # in OCRD now (CardType S); their documents arrive with the AP stage
+vat_rate: 0.20             # standard rate on UK customers; non-UK customers are zero-rated
+non_uk_share: 0.05         # customers in Ireland, zero-rated
+
+# Customer groups (OCRG): share of customers, typical invoice size in GBP, and the
+# usual payment terms for the group (OCTG names below).
+customer_groups:
+  Construction:            {share: 0.24, invoice_gbp: 1100, terms: {Net 30: 0.5, 30 days EOM: 0.5}}
+  Manufacturing:           {share: 0.26, invoice_gbp: 1600, terms: {Net 30: 0.4, 30 days EOM: 0.4, Net 60: 0.2}}
+  Utilities:               {share: 0.10, invoice_gbp: 2600, terms: {30 days EOM: 0.4, Net 60: 0.6}}
+  Public Sector:           {share: 0.12, invoice_gbp: 900,  terms: {Net 30: 1.0}}
+  Distributors:            {share: 0.14, invoice_gbp: 2200, terms: {Net 60: 0.7, 30 days EOM: 0.3}}
+  Facilities Management:   {share: 0.14, invoice_gbp: 700,  terms: {Net 14: 0.3, Net 30: 0.7}}
+
+supplier_groups:          # share of suppliers in each group
+  Manufacturers: 0.35
+  Wholesalers: 0.25
+  Logistics: 0.10
+  Services: 0.12
+  Subcontractors: 0.18     # installation and site labour: CIS applies to what we pay them
+
+# Payment terms (OCTG): days added to the invoice date; EOM terms count from the
+# end of the invoice month.
+payment_terms:
+  Net 14:       {days: 14, eom: false}
+  Net 30:       {days: 30, eom: false}
+  30 days EOM:  {days: 30, eom: true}
+  Net 60:       {days: 60, eom: false}
+
+# Annual spend per customer (GBP, ex VAT): lognormal around the median, clipped.
+# A few "key accounts" are scaled up so top-ten lists are dominated by them.
+annual_spend: {median_gbp: 45000, sigma: 1.0, min_gbp: 3000, max_gbp: 900000}
+key_accounts: {count: 6, multiplier: 8}
+late_joiners: 0.15         # share of customers whose first invoice comes after the history start
+growth_per_year: 0.05      # sales volume trend
+
+# How customers pay. Days are relative to the invoice due date. The share of each
+# type is the share of customers.
+payer_types:
+  prompt:   {share: 0.50, days_late: [-5, 6]}
+  slow:     {share: 0.24, days_late: [15, 45]}
+  chronic:  {share: 0.04, days_late: [60, 120]}
+  batch:    {share: 0.10}                       # one remittance on the last working day of each month
+  partial:  {share: 0.05, instalments: [2, 3], days_late: [0, 20], gap_days: 30}
+  disputes: {share: 0.05, disputed_share: 0.30, days_late: [10, 40]}
+  bad_debt: {share: 0.02, stops_between: [2025-09-01, 2026-06-30]}
+
+credit_notes:
+  base_rate: 0.025         # share of invoices that get a credit note (returns, pricing errors)
+  full_credit_share: 0.15  # of credits based on an invoice, credited in full rather than one or two lines
+  days_after: [5, 40]      # business days after the invoice
+
+# Credit notes raised standalone, not based on the invoice they belong to. The
+# invoice reference is typed into Comments, if at all, and someone matches the
+# credit to the invoice(s) later in an internal reconciliation (OITR/ITR1).
+standalone_credits:
+  share_of_credits: 0.35          # of all credit events
+  multi_invoice_share: 0.25       # one credit covering several invoices
+  invoices_per_credit: [2, 4]
+  leftover_share: 0.15            # part of the credit is never assigned and stays on account
+  reconcile_after_days: [2, 40]   # business days from credit to reconciliation, for a clean reference
+  # Worse references take longer to match and are more often never matched: the old tail of the backlog.
+  lag_multiplier:   {clean: 1, typo: 1.5, po_only: 2, none: 3}
+  never_reconciled: {clean: 0.01, typo: 0.04, po_only: 0.08, none: 0.20}
+  reference_quality:              # what is typed in Comments
+    clean: 0.45                   # the invoice number(s), e.g. "Credit raise for inv 173638"
+    typo: 0.20                    # one number mistyped
+    po_only: 0.15                 # the customer's PO number instead of ours
+    none: 0.20                    # "Credit as agreed", or nothing
+
+# Cancelled invoices: B1 marks the invoice cancelled and creates a cancellation
+# credit note (ORIN.CANCELED = C). The pair nets to zero and is excluded everywhere.
+cancellations: {rate: 0.005, days_after: [0, 3]}
+
+month_end_bunching: 0.25   # share of individual payments moved to the last working day of their month
+
+# Payments that arrive on account (ORCT.NoDocSum) instead of being allocated on
+# receipt, with whatever remittance reference came with them in Comments.
+unallocated_receipts:
+  share_of_payments: 0.03
+  reconcile_after_days: [1, 15]
+  lag_multiplier:   {clean: 1, typo: 1.5, po_only: 2, none: 4}
+  never_reconciled: {clean: 0.005, typo: 0.02, po_only: 0.05, none: 0.15}
+  reference_quality: {clean: 0.50, typo: 0.15, po_only: 0.15, none: 0.20}
+unidentified_cash: 20      # payments matching no invoice at all, never allocated
+
+# Construction Industry Scheme. CIS applies to labour, not materials, so it bites
+# on what we pay subcontractors (AP stage), not on goods we sell. Customers carry a
+# CIS contractor flag (a user-defined field) for reporting and reverse-charge checks.
+cis:
+  contractor_groups: [Construction]
+  contractor_share: 0.6
+  subcontractor_groups: [Subcontractors]
+  subcontractor_status: {CIS20: 0.75, CIS0: 0.20, CIS30: 0.05}   # default withholding tax code per subcontractor
+  wt_codes:
+    CIS0:  {name: "CIS gross payment status", rate: 0}
+    CIS20: {name: "CIS registered (net)", rate: 20}
+    CIS30: {name: "CIS not registered", rate: 30}
+
+# Seasonal volume: August and the last two weeks of December are quiet.
+seasonality: {aug: 0.8, late_dec: 0.5, early_jan: 0.8}
+
+sales_employees: [Priya Shah, Tom Walker, Megan Hughes, Dan Brooks, Aisha Khan, Owen Price]
+
+item_groups:              # OITB: group name, number of items, typical unit price GBP
+  Fasteners:              {items: 60, price_gbp: 4}
+  Bearings:               {items: 40, price_gbp: 28}
+  Power Transmission:     {items: 35, price_gbp: 65}
+  Electrical:             {items: 45, price_gbp: 22}
+  PPE:                    {items: 40, price_gbp: 12}
+  Hand Tools:             {items: 35, price_gbp: 30}
+  Lubricants:             {items: 20, price_gbp: 18}
+  Pneumatics:             {items: 25, price_gbp: 45}
